@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2, Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { useAuth } from '../hooks/useAuth'
+import { useNavigate, Link } from 'react-router-dom'
+import { Eye, EyeOff, Loader2, Mail, Lock, User, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { authAPI } from '../hooks/api'
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -18,14 +18,27 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setSuccess(null)
+
+    if (password !== confirmPassword) {
+      setError('两次密码输入不一致')
+      return
+    }
+
+    if (password.length < 8) {
+      setError('密码至少需要8位')
+      return
+    }
+
     setLoading(true)
 
     try {
-      await login(email, password, rememberMe)
-      setSuccess('登录成功，正在跳转...')
-      setTimeout(() => navigate('/dashboard'), 800)
+      const { data } = await authAPI.register({ name, email, password })
+      if (data.success) {
+        setSuccess('注册成功！正在跳转到登录页...')
+        setTimeout(() => navigate('/login'), 1500)
+      }
     } catch (err: any) {
-      setError(err.message || '登录失败，请重试')
+      setError(err.response?.data?.error || err.message || '注册失败，请重试')
     } finally {
       setLoading(false)
     }
@@ -34,7 +47,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#060607] via-[#0a0a0c] to-[#060607] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="flex justify-center mb-8">
           <svg viewBox="0 0 100 100" className="w-20 h-20" xmlns="http://www.w3.org/2000/svg">
             <rect x="4" y="4" width="92" height="92" rx="16" stroke="#E61B23" strokeWidth="8" fill="white" />
@@ -60,11 +72,10 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white tracking-tight">华美国际信用社</h1>
-          <p className="text-[#8e8574] text-sm mt-1">华美银行直辖官方子公司 · VIP 运营商安全账号</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">创建账号</h1>
+          <p className="text-[#8e8574] text-sm mt-1">注册华美国际信用社VIP账户</p>
         </div>
 
-        {/* Card */}
         <div className="bg-[#0b0b0d] border border-[#1f1d1a] rounded-2xl p-8 shadow-2xl shadow-black/50">
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-3 text-red-400 text-sm">
@@ -81,9 +92,24 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-xs font-medium text-[#cbd5e1] mb-2">
-                邮箱地址
-              </label>
+              <label htmlFor="name" className="block text-xs font-medium text-[#cbd5e1] mb-2">姓名</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8e8574]" />
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 bg-[#121214] border border-[#2c2923] rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] transition-all"
+                  placeholder="请输入姓名"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium text-[#cbd5e1] mb-2">邮箱地址</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8e8574]" />
                 <input
@@ -93,16 +119,14 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="w-full pl-10 pr-4 py-3 bg-[#121214] border border-[#2c2923] rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] transition-all"
-                  placeholder="请输入注册邮箱"
+                  placeholder="请输入邮箱"
                   disabled={loading}
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-medium text-[#cbd5e1] mb-2">
-                登录密码
-              </label>
+              <label htmlFor="password" className="block text-xs font-medium text-[#cbd5e1] mb-2">登录密码</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8e8574]" />
                 <input
@@ -112,7 +136,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full pl-10 pr-12 py-3 bg-[#121214] border border-[#2c2923] rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] transition-all"
-                  placeholder="请输入密码"
+                  placeholder="至少8位密码"
                   disabled={loading}
                 />
                 <button
@@ -126,19 +150,21 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <div>
+              <label htmlFor="confirmPassword" className="block text-xs font-medium text-[#cbd5e1] mb-2">确认密码</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8e8574]" />
                 <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 accent-[#d4af37] border-[#2c2923] bg-[#121214] rounded focus:ring-[#d4af37]"
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 bg-[#121214] border border-[#2c2923] rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] transition-all"
+                  placeholder="再次输入密码"
+                  disabled={loading}
                 />
-                <span className="text-xs text-[#8e8574]">记住我 (30天免登)</span>
-              </label>
-              <a href="/forgot-password" className="text-xs text-[#d4af37] hover:text-[#f6e0a4] transition-colors">
-                忘记密码？
-              </a>
+              </div>
             </div>
 
             <button
@@ -149,29 +175,20 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  登录中...
+                  注册中...
                 </>
               ) : (
-                '安全登录'
+                '创建账号'
               )}
             </button>
           </form>
 
           <div className="mt-6 pt-6 border-t border-[#2c2925] text-center">
             <p className="text-xs text-[#64748b]">
-              还没有账号？{' '}
-              <a href="/register" className="text-[#d4af37] hover:text-[#f6e0a4] transition-colors">立即注册</a>
+              已有账号？{' '}
+              <Link to="/login" className="text-[#d4af37] hover:text-[#f6e0a4] transition-colors">返回登录</Link>
             </p>
           </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <p className="text-[10px] text-[#475569] font-mono tracking-wider uppercase">
-            PCI DSS 合规审计认证 · Visa BIN联名安全认证
-          </p>
-          <p className="text-[10px] text-[#475569] font-mono tracking-wider uppercase mt-1">
-            © 2026 虚拟信用卡系统与共管清算账本
-          </p>
         </div>
       </div>
     </div>

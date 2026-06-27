@@ -2,6 +2,7 @@ import React from 'react'
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import AccountPage from './pages/AccountPage'
 import RechargePage from './pages/RechargePage'
@@ -115,6 +116,7 @@ function AppRoutes() {
     <Routes>
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Route>
       
       <Route element={<ProtectedRoute />}>

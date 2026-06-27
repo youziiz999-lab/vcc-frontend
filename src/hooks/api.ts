@@ -42,6 +42,9 @@ export const authAPI = {
   
   me: () => api.get<AuthResponse>('/auth/me'),
   
+  register: (data: { name: string; email: string; password: string }) =>
+    api.post<AuthResponse>('/auth/register', data),
+
   refresh: () => api.post<AuthResponse>('/auth/refresh'),
   
   enable2FA: () => api.post('/auth/2fa/enable'),
